@@ -37,7 +37,7 @@ func main() {
 	cleanedStrings := stopwords.CleanString(inputString, "en", false)
 	words := strings.Fields(cleanedStrings)
 
-	// Нормализация слов
+	// Нормализация слов и кастомная очистка
 	var normalizedWords = make(map[string]bool)
 	for _, word := range words {
 		if _, ok := customStopWords[word]; ok {
