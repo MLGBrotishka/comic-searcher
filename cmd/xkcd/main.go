@@ -53,7 +53,7 @@ func main() {
 	comicsMap := comicsToMap(normalizedComics)
 
 	if outputFlag {
-		fmt.Println(comicsMap)
+		printComicsInfo(comicsMap)
 	} else {
 		err = db.SaveComics(config.DBFile, comicsMap)
 		if err != nil {
@@ -73,6 +73,17 @@ func comicsToMap(comics []words.Comic) db.ComicsMap {
 		comicsMap[comic.ID] = data
 	}
 	return comicsMap
+}
+
+func printComicsInfo(comicsMap db.ComicsMap) {
+	for id, comic := range comicsMap {
+		fmt.Println(id)
+		fmt.Println(comic.URL)
+		for _, value := range comic.Keywords {
+			fmt.Printf("%s ", value)
+		}
+		fmt.Println()
+	}
 }
 
 func loadConfig(path string) (*Config, error) {
