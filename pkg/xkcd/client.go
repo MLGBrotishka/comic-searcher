@@ -3,7 +3,6 @@ package xkcd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -15,25 +14,29 @@ func NewClient(sourceURL string) *Client {
 	return &Client{sourceURL: sourceURL}
 }
 
-func (c *Client) FetchComics(limit int) ([]Comic, error) {
+func (c *Client) FetchComics(from int, limit int, existingComics map[int]bool) ([]Comic, error) {
 	var comics []Comic
-	i := 1
+	i := from
 	for {
+		if _, exist := existingComics[i]; exist {
+			limit--
+			i++
+			continue
+		}
+		// Если достигнут лимит, прерываем цикл
+		if len(comics) >= limit {
+			break
+		}
 		url := fmt.Sprintf("%s/%d/info.0.json", c.sourceURL, i)
 		resp, err := http.Get(url)
-		if err != nil {
+		if err != nil || resp.StatusCode != http.StatusOK {
 			// Если возникла ошибка, прерываем цикл
 			break
 		}
 		defer resp.Body.Close()
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
 		var comic Comic
-		err = json.Unmarshal(body, &comic)
+		err = json.NewDecoder(resp.Body).Decode(&comic)
 		if err != nil {
 			return nil, err
 		}
@@ -41,10 +44,6 @@ func (c *Client) FetchComics(limit int) ([]Comic, error) {
 		comics = append(comics, comic)
 		i++
 
-		// Если limit не равен 0 и достигнут лимит, прерываем цикл
-		if limit > 0 && len(comics) >= limit {
-			break
-		}
 	}
 	return comics, nil
 }
