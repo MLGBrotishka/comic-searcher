@@ -28,7 +28,7 @@ func main() {
 	var configPath string
 	flag.BoolVar(&outputFlag, "o", false, "Output JSON structure")
 	flag.BoolVar(&overwriteFlag, "r", false, "Overwrite existing comics")
-	flag.IntVar(&fromId, "f", 0, "Load from id")
+	flag.IntVar(&fromId, "f", 1, "Load from id")
 	flag.IntVar(&toId, "t", 0, "Load to id")
 	flag.IntVar(&chunkSize, "s", 100, "Chunk size load/save")
 	flag.IntVar(&limitOutput, "n", 0, "Limit the number of comics")
@@ -65,27 +65,26 @@ func main() {
 	loadedComics := 0
 	printLimit := limitOutput
 	for {
+
 		if limitOutput == 0 {
 			printLimit = chunkSize
 		}
 
+		nextId := fromId + chunkSize
+
 		if toId > 0 {
-			if fromId+chunkSize >= toId {
-				chunkSize = toId - fromId
-			}
+			nextId = min(toId, fromId+chunkSize)
 		}
-		fmt.Println(chunkSize)
+
 		// Получаем комиксы
-		comics, err := client.FetchComics(fromId, chunkSize, existingComics)
+		comics, err := client.FetchComics(fromId, nextId, existingComics)
 		if err != nil {
 			fmt.Println("Error fetching comics:", err)
 			os.Exit(1)
 		}
 
-		// Нормализуем
-		normalizedComics := words.NormalizeComics(comics, false)
-		// Переводим в мапу
-		comicsMap := comicsToMap(normalizedComics)
+		// Нормализуем и переводим в мапу
+		comicsMap := comicsToNormalizedMap(comics)
 
 		err = db.SaveComics(config.DBFile, comicsMap, overwriteFlag)
 		overwriteFlag = false
@@ -93,9 +92,11 @@ func main() {
 			fmt.Println("Error saving comics:", err)
 			os.Exit(1)
 		}
+
 		if outputFlag {
 			printComicsInfo(comicsMap, printLimit)
 		}
+
 		printLimit -= len(comics)
 		loadedComics += len(comics)
 
@@ -103,7 +104,7 @@ func main() {
 		if len(comics) < chunkSize {
 			break
 		}
-		fromId += len(comics)
+		fromId = nextId + 1
 		if fromId >= toId {
 			break
 		}
@@ -111,12 +112,14 @@ func main() {
 
 }
 
-func comicsToMap(comics []words.Comic) db.ComicsMap {
+func comicsToNormalizedMap(comics []xkcd.Comic) db.ComicsMap {
 	comicsMap := make(db.ComicsMap)
 	for _, comic := range comics {
+		inputString := comic.Transcript + " " + comic.Alt
+		keywords := words.NormalizeString(inputString, false)
 		data := db.Comic{
 			URL:      comic.URL,
-			Keywords: comic.Keywords,
+			Keywords: keywords,
 		}
 		comicsMap[comic.ID] = data
 	}

@@ -14,17 +14,17 @@ func NewClient(sourceURL string) *Client {
 	return &Client{sourceURL: sourceURL}
 }
 
-func (c *Client) FetchComics(from int, limit int, existingComics map[int]bool) ([]Comic, error) {
+// Получает все комиксы начиная с from до to, которые еще не загружены
+func (c *Client) FetchComics(from int, to int, existingComics map[int]bool) ([]Comic, error) {
 	var comics []Comic
 	i := from
 	for {
-		if _, exist := existingComics[i]; exist {
-			limit--
+		if _, exist := existingComics[i]; exist || i == 404 { //Прикол сайта
 			i++
 			continue
 		}
 		// Если достигнут лимит, прерываем цикл
-		if len(comics) >= limit {
+		if i > to {
 			break
 		}
 		url := fmt.Sprintf("%s/%d/info.0.json", c.sourceURL, i)
