@@ -30,7 +30,7 @@ func main() {
 	flag.BoolVar(&overwriteFlag, "r", false, "Overwrite existing comics")
 	flag.IntVar(&fromId, "f", 1, "Load from id")
 	flag.IntVar(&toId, "t", 0, "Load to id")
-	flag.IntVar(&chunkSize, "s", 100, "Chunk size load/save")
+	flag.IntVar(&chunkSize, "s", 99, "Chunk size load/save")
 	flag.IntVar(&limitOutput, "n", 0, "Limit the number of comics")
 	flag.StringVar(&configPath, "c", "", "Config path")
 	flag.Parse()
@@ -101,11 +101,11 @@ func main() {
 		loadedComics += len(comics)
 
 		fmt.Println("Loaded new comics: ", loadedComics)
-		if len(comics) < chunkSize {
+		if len(comics) < chunkSize && toId == 0 {
 			break
 		}
 		fromId = nextId + 1
-		if fromId >= toId {
+		if fromId >= toId && toId > 0 {
 			break
 		}
 	}
