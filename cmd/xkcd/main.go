@@ -76,7 +76,7 @@ func main() {
 	}(&errorCount)
 
 	// Основной цикл
-	fromId := 2900
+	fromId := 0
 	for {
 		if errorCount < 10 {
 			fromId++
