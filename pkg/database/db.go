@@ -35,8 +35,6 @@ func LoadExistingComics(filePath string) (map[int]bool, error) {
 	return existingComicsMap, nil
 }
 
-//todo: быстрая запись, без загрузки в память
-
 func SaveComics(filePath string, comics ComicsMap, overwrite bool) error {
 	// Проверяем, существует ли файл
 	if _, err := os.Stat(filePath); os.IsNotExist(err) || overwrite {
@@ -57,12 +55,6 @@ func SaveComics(filePath string, comics ComicsMap, overwrite bool) error {
 	err = json.Unmarshal(data, &existingComics)
 	if err != nil {
 		return err
-	}
-
-	for id, comic := range comics {
-		if _, exists := existingComics[id]; !exists {
-			existingComics[id] = comic
-		}
 	}
 
 	// Преобразование структуры в JSON

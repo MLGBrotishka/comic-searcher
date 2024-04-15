@@ -2,8 +2,10 @@ package xkcd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 type Client struct {
@@ -29,9 +31,13 @@ func (c *Client) FetchComics(from int, to int, existingComics map[int]bool) ([]C
 		}
 		url := fmt.Sprintf("%s/%d/info.0.json", c.sourceURL, i)
 		resp, err := http.Get(url)
-		if err != nil || resp.StatusCode != http.StatusOK {
+		if err != nil {
 			// Если возникла ошибка, прерываем цикл
-			break
+			return comics, err
+		}
+		if resp.StatusCode != http.StatusOK {
+			// Если возникла ошибка, прерываем цикл
+			return comics, errors.New(strconv.Itoa(resp.StatusCode))
 		}
 		defer resp.Body.Close()
 

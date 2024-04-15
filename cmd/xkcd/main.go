@@ -8,6 +8,7 @@ import (
 	"my_app/pkg/xkcd"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
@@ -15,23 +16,12 @@ import (
 type Config struct {
 	SourceURL string `yaml:"source_url"`
 	DBFile    string `yaml:"db_file"`
+	Parallel  int    `yaml:"parallel"`
 }
 
 func main() {
 	// Добавляем флаги
-	var outputFlag bool
-	var overwriteFlag bool
-	var fromId int
-	var toId int
-	var chunkSize int
-	var limitOutput int
 	var configPath string
-	flag.BoolVar(&outputFlag, "o", false, "Output JSON structure")
-	flag.BoolVar(&overwriteFlag, "r", false, "Overwrite existing comics")
-	flag.IntVar(&fromId, "f", 1, "Load from id")
-	flag.IntVar(&toId, "t", 0, "Load to id")
-	flag.IntVar(&chunkSize, "s", 99, "Chunk size load/save")
-	flag.IntVar(&limitOutput, "n", 0, "Limit the number of comics")
 	flag.StringVar(&configPath, "c", "", "Config path")
 	flag.Parse()
 
@@ -51,65 +41,82 @@ func main() {
 		os.Exit(1)
 	}
 
-	existingComics := make(map[int]bool)
-	if !overwriteFlag {
-		existingComics, err = db.LoadExistingComics(config.DBFile)
-		if err != nil {
-			fmt.Println("Error loading existing comics:", err)
-			os.Exit(1)
-		}
+	existingComics, err := db.LoadExistingComicsJsonl(config.DBFile)
+	if err != nil {
+		fmt.Println("Error loading existing comics:", err)
+		os.Exit(1)
 	}
 
 	// Создаем клиент
 	client := xkcd.NewClient(config.SourceURL)
-	loadedComics := 0
-	printLimit := limitOutput
+
+	jobs := make(chan int)
+	results := make(chan error)
+	var goWg sync.WaitGroup
+	var dbMx sync.Mutex
+
+	for w := 1; w <= config.Parallel; w++ {
+		goWg.Add(1)
+		go worker(w, &goWg, existingComics, client, config.DBFile, &dbMx, jobs, results)
+	}
+
+	// Горутина для подсчета ошибок
+	errorCount := 0
+
+	go func(errorCount *int) {
+		count := 0
+		for err := range results {
+			if err != nil {
+				*errorCount++
+				if count >= 10 {
+					break
+				}
+			}
+		}
+	}(&errorCount)
+
+	// Основной цикл
+	fromId := 2900
 	for {
-
-		if limitOutput == 0 {
-			printLimit = chunkSize
-		}
-
-		nextId := fromId + chunkSize
-
-		if toId > 0 {
-			nextId = min(toId, fromId+chunkSize)
-		}
-
-		// Получаем комиксы
-		comics, err := client.FetchComics(fromId, nextId, existingComics)
-		if err != nil {
-			fmt.Println("Error fetching comics:", err)
-			os.Exit(1)
-		}
-
-		// Нормализуем и переводим в мапу
-		comicsMap := comicsToNormalizedMap(comics)
-
-		err = db.SaveComics(config.DBFile, comicsMap, overwriteFlag)
-		overwriteFlag = false
-		if err != nil {
-			fmt.Println("Error saving comics:", err)
-			os.Exit(1)
-		}
-
-		if outputFlag {
-			printComicsInfo(comicsMap, printLimit)
-		}
-
-		printLimit -= len(comics)
-		loadedComics += len(comics)
-
-		fmt.Println("Loaded new comics: ", loadedComics)
-		if len(comics) < chunkSize && toId == 0 {
-			break
-		}
-		fromId = nextId + 1
-		if fromId >= toId && toId > 0 {
+		if errorCount < 10 {
+			fromId++
+			jobs <- fromId
+		} else {
 			break
 		}
 	}
+	fmt.Println("Остановлено из-за 10 ошибок")
+	close(jobs)
+	goWg.Wait()
 
+}
+
+func worker(id int, goWg *sync.WaitGroup, existingComics map[int]bool, client *xkcd.Client, filePath string, dbMx *sync.Mutex, jobs <-chan int, results chan<- error) {
+	defer goWg.Done()
+	for j := range jobs {
+		if j == -1 {
+			return
+		}
+		if _, ok := existingComics[j]; ok {
+			continue
+		}
+		comics, err := client.FetchComics(j, j, existingComics)
+		if err != nil {
+			results <- err
+			continue
+		}
+		comicsMap := comicsToNormalizedMap(comics)
+		dbMx.Lock()
+		err = db.SaveComicsJsonl(filePath, comicsMap)
+		dbMx.Unlock()
+		if err != nil {
+			results <- err
+			continue
+		}
+		fmt.Println("Worker :", id, " saved comic ", j)
+		results <- nil
+
+	}
 }
 
 func comicsToNormalizedMap(comics []xkcd.Comic) db.ComicsMap {
@@ -124,21 +131,6 @@ func comicsToNormalizedMap(comics []xkcd.Comic) db.ComicsMap {
 		comicsMap[comic.ID] = data
 	}
 	return comicsMap
-}
-
-func printComicsInfo(comicsMap db.ComicsMap, limit int) {
-	for id, comic := range comicsMap {
-		if limit <= 0 {
-			break
-		}
-		fmt.Println(id)
-		fmt.Println(comic.URL)
-		for _, value := range comic.Keywords {
-			fmt.Printf("%s ", value)
-		}
-		fmt.Println()
-		limit--
-	}
 }
 
 func loadConfig(path string) (*Config, error) {
