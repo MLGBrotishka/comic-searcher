@@ -10,3 +10,6 @@ run: build
 
 clean:
 	rm -f xkcd
+
+bench:
+	go test -bench . -benchtime 10000x ./internal/search

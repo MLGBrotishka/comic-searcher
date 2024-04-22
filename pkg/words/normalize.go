@@ -11,6 +11,9 @@ import (
 )
 
 func NormalizeString(inputString string, dontStripDigits bool) []string {
+	//Избавляемся от лишних _ -
+	re := regexp.MustCompile(`[-_]+`)
+	inputString = re.ReplaceAllString(inputString, "")
 	//Избавляемся от апострофов
 	re1 := regexp.MustCompile(`'[a-zA-Z]{1,2}\s`)
 	inputString = re1.ReplaceAllString(inputString, " ")

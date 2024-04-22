@@ -3,26 +3,33 @@ package main
 import (
 	"flag"
 	"fmt"
+	"my_app/internal/search"
+	"my_app/internal/xkcd"
 	db "my_app/pkg/database"
 	"my_app/pkg/words"
-	"my_app/pkg/xkcd"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
 	SourceURL string `yaml:"source_url"`
-	DBFile    string `yaml:"db_file"`
+	DBPath    string `yaml:"db_file"`
 	Parallel  int    `yaml:"parallel"`
+	IndexPath string `yaml:"index_file"`
 }
 
 func main() {
 	// Добавляем флаги
 	var configPath string
+	var inputString string
+	var debugFrom int
+	var useIndexSearch bool
 	flag.StringVar(&configPath, "c", "", "Config path")
+	flag.StringVar(&inputString, "s", "", "Input string to find")
+	flag.BoolVar(&useIndexSearch, "i", false, "Use index search")
+	flag.IntVar(&debugFrom, "f", 0, "From id load, need to debug")
 	flag.Parse()
 
 	// Получаем конфиг
@@ -35,102 +42,86 @@ func main() {
 		configPath = filepath.Join(exPath, "config.yaml")
 	}
 
+	// Проверяем строку
+	if inputString == "" {
+		fmt.Println("Please provide an input string with -s")
+		return
+	}
+
 	config, err := loadConfig(configPath)
 	if err != nil {
 		fmt.Println("Error loading config:", err)
 		os.Exit(1)
 	}
 
-	existingComics, err := db.LoadExistingComicsJsonl(config.DBFile)
+	// Получение новых комиксов и сохранение их в базу данных
+	err = xkcd.GetNewComics(config.DBPath, config.SourceURL, config.Parallel, debugFrom)
 	if err != nil {
-		fmt.Println("Error loading existing comics:", err)
-		os.Exit(1)
+		fmt.Println("Error getting new comics:", err)
+		panic(err)
 	}
 
-	// Создаем клиент
-	client := xkcd.NewClient(config.SourceURL)
-
-	jobs := make(chan int)
-	results := make(chan error)
-	var goWg sync.WaitGroup
-	var dbMx sync.Mutex
-
-	for w := 1; w <= config.Parallel; w++ {
-		goWg.Add(1)
-		go worker(w, &goWg, existingComics, client, config.DBFile, &dbMx, jobs, results)
+	// Загрузка комиксов из базы данных
+	comics, err := db.LoadComicsJsonl(config.DBPath)
+	if err != nil {
+		fmt.Println("Error loading comics:", err)
+		panic(err)
 	}
 
-	// Горутина для подсчета ошибок
-	errorCount := 0
+	// Преобразование комиксов из формата базы данных в формат поиска
+	searchComics := convertComics(comics)
 
-	go func(errorCount *int) {
-		count := 0
-		for err := range results {
-			if err != nil {
-				*errorCount++
-				if count >= 10 {
-					break
-				}
-			}
-		}
-	}(&errorCount)
-
-	// Основной цикл
-	fromId := 0
-	for {
-		if errorCount < 10 {
-			fromId++
-			jobs <- fromId
-		} else {
-			break
-		}
+	// Построение индекса для поиска по ключевым словам
+	err = search.BuildIndex(config.IndexPath, searchComics)
+	if err != nil {
+		fmt.Println("Error building indexes:", err)
+		panic(err)
 	}
-	fmt.Println("Остановлено из-за 10 ошибок")
-	close(jobs)
-	goWg.Wait()
 
-}
+	// Загрузка индекса для поиска
+	indexMap, err := search.LoadIndex(config.IndexPath)
+	if err != nil {
+		fmt.Println("Error loading indexes:", err)
+		panic(err)
+	}
 
-func worker(id int, goWg *sync.WaitGroup, existingComics map[int]bool, client *xkcd.Client, filePath string, dbMx *sync.Mutex, jobs <-chan int, results chan<- error) {
-	defer goWg.Done()
-	for j := range jobs {
-		if j == -1 {
-			return
-		}
-		if _, ok := existingComics[j]; ok {
-			continue
-		}
-		comics, err := client.FetchComics(j, j, existingComics)
-		if err != nil {
-			results <- err
-			continue
-		}
-		comicsMap := comicsToNormalizedMap(comics)
-		dbMx.Lock()
-		err = db.SaveComicsJsonl(filePath, comicsMap)
-		dbMx.Unlock()
-		if err != nil {
-			results <- err
-			continue
-		}
-		fmt.Println("Worker :", id, " saved comic ", j)
-		results <- nil
+	// Нормализация входной строки для поиска
+	normalizedInput := words.NormalizeString(inputString, false)
+	if len(normalizedInput) == 0 {
+		fmt.Println("Please provide more information")
+		return
+	}
 
+	// Поиск комиксов по индексу или напрямую
+	var foundIds []int
+	if useIndexSearch {
+		foundIds, _ = search.FindByIndex(indexMap, normalizedInput, 10)
+	} else {
+		straightIndex, _ := search.GetStraightIndex(searchComics)
+		foundIds, _ = search.FindStraight(straightIndex, normalizedInput, 10)
+	}
+
+	// Вывод результатов поиска
+	if len(foundIds) == 0 {
+		fmt.Println("Not found")
+		return
+	}
+	fmt.Println("Found:", len(foundIds), "comics")
+	for _, id := range foundIds {
+		fmt.Println(id, comics[id].URL)
 	}
 }
 
-func comicsToNormalizedMap(comics []xkcd.Comic) db.ComicsMap {
-	comicsMap := make(db.ComicsMap)
-	for _, comic := range comics {
-		inputString := comic.Transcript + " " + comic.Alt
-		keywords := words.NormalizeString(inputString, false)
-		data := db.Comic{
+// Преобразует комиксы из формата базы данных в формат поиска
+func convertComics(dbComics map[int]db.Comic) search.Comics {
+	searchComics := make(search.Comics)
+	for id, comic := range dbComics {
+		searchComics[id] = search.Comic{
 			URL:      comic.URL,
-			Keywords: keywords,
+			Keywords: comic.Keywords,
 		}
-		comicsMap[comic.ID] = data
 	}
-	return comicsMap
+	return searchComics
 }
 
 func loadConfig(path string) (*Config, error) {

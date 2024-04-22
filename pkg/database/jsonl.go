@@ -41,6 +41,29 @@ func LoadExistingComicsJsonl(filePath string) (map[int]bool, error) {
 	return existingComicsMap, nil
 }
 
+func LoadComicsJsonl(filePath string) (map[int]Comic, error) {
+	_, err := os.Stat(filePath)
+	if err != nil {
+		return nil, err
+	}
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	comics := make(map[int]Comic)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var comic ComicJsonl
+		err := json.Unmarshal(scanner.Bytes(), &comic)
+		if err != nil {
+			return comics, err
+		}
+		comics[comic.ID] = comic.Comic
+	}
+	return comics, nil
+}
+
 // Быстрая запись, без загрузки в память
 func SaveComicsJsonl(filePath string, comics ComicsMap) error {
 	// Дозаписываем в файл формата jsonl комикс
