@@ -76,7 +76,7 @@ func FindByIndex(indexMap IndexMap, normalizedInput []string, maxLen int) ([]int
 			}
 		}
 	}
-	ids := make([]int, 0)
+	var ids []int
 	for k := range intersection {
 		ids = append(ids, k)
 		if len(ids) == maxLen {

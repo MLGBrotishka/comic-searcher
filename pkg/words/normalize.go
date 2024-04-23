@@ -3,9 +3,7 @@ package words
 import (
 	"regexp"
 	"slices"
-	"strings"
 
-	"github.com/bbalet/stopwords"
 	"github.com/kljensen/snowball"
 	"golang.org/x/exp/maps"
 )
@@ -24,12 +22,8 @@ func NormalizeString(inputString string, dontStripDigits bool) []string {
 	re3 := regexp.MustCompile(`'`)
 	inputString = re3.ReplaceAllString(inputString, " ")
 
-	// Очистка строки от стоп-слов
-	if dontStripDigits {
-		stopwords.DontStripDigits()
-	}
-	cleanedStrings := stopwords.CleanString(inputString, "en", true)
-	words := strings.Fields(cleanedStrings)
+	re4 := regexp.MustCompile(`[\pL\p{Mc}\p{Mn}-_']+`)
+	words := re4.FindAllString(inputString, -1)
 
 	// Нормализация слов
 	var normalizedWords = make(map[string]bool)

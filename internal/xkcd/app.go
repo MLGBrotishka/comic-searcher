@@ -91,7 +91,7 @@ func worker(id int, goWg *sync.WaitGroup, existingComics map[int]bool, client *C
 func comicsToNormalizedMap(comics []Comic) db.ComicsMap {
 	comicsMap := make(db.ComicsMap)
 	for _, comic := range comics {
-		inputString := comic.Transcript + " " + comic.Alt
+		inputString := comic.Transcript + " " + comic.Alt + " " + comic.Title
 		keywords := words.NormalizeString(inputString, false)
 		data := db.Comic{
 			URL:      comic.URL,
