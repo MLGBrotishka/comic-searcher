@@ -1,4 +1,0 @@
-source_url: https://xkcd.com
-db_file: database.jsonl
-parallel: 10
-index_file: index.json

@@ -1,6 +1,6 @@
-package words
+package normalizer
 
-var customStopWords = map[string]bool{
+var stopWords = map[string]bool{
 	"i":            true,
 	"ah":           true,
 	"oh":           true,

@@ -2,11 +2,11 @@
 
 all: build
 
-build:
-	go build -o xkcd cmd/xkcd/main.go
-
 run: build
 	./xkcd
+
+build:
+	go build -o xkcd cmd/xkcd/main.go
 
 clean:
 	rm -f xkcd
