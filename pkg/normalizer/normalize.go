@@ -3,6 +3,7 @@ package normalizer
 import (
 	"context"
 	"fmt"
+	"my_app/internal/entity"
 	"regexp"
 
 	"github.com/kljensen/snowball"
@@ -16,7 +17,7 @@ func New() *Normalizer {
 	return &Normalizer{}
 }
 
-func (n *Normalizer) Normalize(ctx context.Context, inputString string) (map[string]bool, error) {
+func (n *Normalizer) Normalize(ctx context.Context, inputString string) (entity.KeywordMap, error) {
 	//Избавляемся от лишних _ -
 	re := regexp.MustCompile(`[-_]+`)
 	inputString = re.ReplaceAllString(inputString, "")
@@ -34,7 +35,7 @@ func (n *Normalizer) Normalize(ctx context.Context, inputString string) (map[str
 	words := re4.FindAllString(inputString, -1)
 
 	// Нормализация слов
-	var normalizedWords = make(map[string]bool)
+	var normalizedWords = make(entity.KeywordMap)
 	for _, word := range words {
 		if stopWords[word] {
 			continue

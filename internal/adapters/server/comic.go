@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"my_app/internal/entity"
@@ -64,7 +65,7 @@ func (routes *comicRoutes) getPictures(w http.ResponseWriter, r *http.Request) {
 	urls, err := routes.uc.GetPictures(r.Context(), rawQuery)
 	if err != nil {
 		routes.l.Error(err, "http - getPictures")
-		switch err {
+		switch errors.Unwrap(err) {
 		case entity.ErrBadRequest:
 			errorResponse(w, http.StatusNotFound, "provide more information")
 		case entity.ErrNotFound:

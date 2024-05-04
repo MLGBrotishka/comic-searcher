@@ -1,0 +1,19 @@
+app:
+  name: 'comic-searcher'
+  version: '1.0.0'
+
+http:
+  port: '8080'
+
+logger:
+  log_level: 'debug'
+
+sqlite:
+  comic:
+    dsn: db/comics.db?mode=rwc
+  keyword:
+    dsn: db/keywords.db?mode=rwc
+
+fetcher:
+  url: https://xkcd.com
+  parallel: 10

@@ -1,4 +1,4 @@
-package xkcd
+package fetcher
 
 import (
 	"context"
@@ -14,7 +14,8 @@ type ComicFetcher struct {
 	sourceURL string
 	parallel  int
 	logger    logger.Logger
-	mu        sync.Mutex
+	muErr     sync.Mutex
+	muRes     sync.Mutex
 	wg        sync.WaitGroup
 }
 
@@ -26,20 +27,19 @@ func NewFetcher(sourceURL string, parallel int, logger logger.Logger) *ComicFetc
 	}
 }
 
-func (c *ComicFetcher) GetNew(ctx context.Context, existingComics map[int]bool) ([]entity.ComicRaw, error) {
+func (c *ComicFetcher) GetNew(ctx context.Context, existingComics entity.IdMap) ([]entity.ComicRaw, error) {
 	var comics []entity.ComicRaw
 	jobs := make(chan int)
-	results := make(chan entity.ComicRaw)
 
 	errorCount := 0
 
 	for w := 1; w <= c.parallel; w++ {
 		c.wg.Add(1)
-		go c.worker(w, jobs, results, &errorCount)
+		go c.worker(w, jobs, &comics, &errorCount)
 	}
 
 	currId := 0
-	for errorCount < 10 {
+	for errorCount < 5 && currId < 10 {
 		currId++
 		if existingComics[currId] {
 			continue
@@ -48,24 +48,23 @@ func (c *ComicFetcher) GetNew(ctx context.Context, existingComics map[int]bool) 
 	}
 	close(jobs)
 	c.wg.Wait()
-	close(results)
-	for comic := range results {
-		comics = append(comics, comic)
-	}
 	return comics, nil
 }
 
-func (c *ComicFetcher) worker(id int, jobs <-chan int, results chan<- entity.ComicRaw, errorCount *int) {
+func (c *ComicFetcher) worker(id int, jobs <-chan int, comics *[]entity.ComicRaw, errorCount *int) {
 	defer c.wg.Done()
 	for j := range jobs {
 		comic, err := c.GetComic(context.Background(), j)
 		if err != nil {
-			c.mu.Lock()
+			c.muErr.Lock()
 			(*errorCount)++
-			c.mu.Unlock()
+			c.muErr.Unlock()
+			c.logger.Debug("Worker %d failed to get comic %d: %v", id, j, err)
 			continue
 		}
-		results <- comic
+		c.muRes.Lock()
+		(*comics) = append((*comics), comic)
+		c.muRes.Unlock()
 		c.logger.Info("Worker :%d got comic : %d", id, j)
 	}
 }

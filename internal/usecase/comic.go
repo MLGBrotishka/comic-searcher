@@ -59,11 +59,11 @@ func (uc *ComicUseCase) GetPictures(ctx context.Context, query string) ([]string
 		return nil, fmt.Errorf("ComicUseCase - GetPictures - uc.normalizer.Normalize: %w", entity.ErrBadRequest)
 	}
 	idFound, err := uc.keyword.Search(ctx, searchKeywords)
-	if err != nil {
-		return nil, fmt.Errorf("ComicUseCase - GetPictures - uc.searcher.Search: %w", err)
-	}
 	if len(idFound) == 0 {
 		return nil, fmt.Errorf("ComicUseCase - GetPictures - uc.searcher.Search: %w", entity.ErrNotFound)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("ComicUseCase - GetPictures - uc.searcher.Search: %w", err)
 	}
 	var urlFound []string
 	for _, id := range idFound {
