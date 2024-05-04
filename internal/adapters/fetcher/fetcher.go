@@ -39,7 +39,7 @@ func (c *ComicFetcher) GetNew(ctx context.Context, existingComics entity.IdMap) 
 	}
 
 	currId := 0
-	for errorCount < 5 && currId < 10 {
+	for errorCount < 5 {
 		currId++
 		if existingComics[currId] {
 			continue
