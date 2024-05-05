@@ -51,7 +51,7 @@ func Run(cfg *config.Config) {
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-
+	l.Info("Server started, waiting for requests...")
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: " + s.String())
