@@ -3,6 +3,7 @@ module my_app
 go 1.22.1
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/kljensen/snowball v0.9.0

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -9,11 +10,12 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App     `yaml:"app"`
-		HTTP    `yaml:"http"`
-		Log     `yaml:"logger"`
-		Sqlite  `yaml:"sqlite"`
-		Fetcher `yaml:"fetcher"`
+		App        `yaml:"app"`
+		HTTP       `yaml:"http"`
+		Log        `yaml:"logger"`
+		Sqlite     `yaml:"sqlite"`
+		Authorizer `yaml:"authorizer"`
+		Fetcher    `yaml:"fetcher"`
 	}
 
 	App struct {
@@ -32,6 +34,7 @@ type (
 	Sqlite struct {
 		Comic   ComicDb   `env-required:"true" yaml:"comic"`
 		Keyword KeywordDb `env-required:"true" yaml:"keyword"`
+		User    UserDB    `env-required:"true" yaml:"user"`
 	}
 
 	ComicDb struct {
@@ -40,6 +43,15 @@ type (
 
 	KeywordDb struct {
 		Dsn string `env-required:"true" yaml:"dsn" env:"SQLITE_KEYWORD_DSN"`
+	}
+
+	UserDB struct {
+		Dsn string `env-required:"true" yaml:"dsn" env:"SQLITE_USER_DSN"`
+	}
+
+	Authorizer struct {
+		TokenMaxTime time.Duration `env-required:"true" yaml:"token_max_time" env:"AUTHORIZER_TOKEN_MAX_TIME"`
+		Secret       string        `env-required:"true" yaml:"secret"       env:"AUTHORIZER_SECRET"`
 	}
 
 	Fetcher struct {

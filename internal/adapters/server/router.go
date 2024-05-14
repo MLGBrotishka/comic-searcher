@@ -7,6 +7,7 @@ import (
 	"my_app/pkg/logger"
 )
 
-func NewRouter(handler *http.ServeMux, l logger.Interface, uc usecase.Comic) {
+func NewRouter(handler *http.ServeMux, uc usecase.Comic, auth usecase.Auth, l logger.Interface) {
 	newComicRoutes(handler, uc, l)
+	newAuthRoutes(handler, auth, l)
 }
