@@ -1,6 +1,8 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type RoleMiddleware struct {
 }
@@ -11,8 +13,8 @@ func NewRoleMiddleware() *RoleMiddleware {
 
 func (em *RoleMiddleware) CheckRole(f http.HandlerFunc, isAsmin bool) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		role := req.Context().Value("role").(bool)
-		if !isAsmin || role {
+		role, ok := req.Context().Value("Role").(bool)
+		if isAsmin && !role || !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}

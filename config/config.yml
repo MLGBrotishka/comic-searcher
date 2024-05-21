@@ -18,7 +18,7 @@ sqlite:
 
 authorizer:
   token_max_time: 10m
-  secret: "secret"
+  secret: secret
 
 fetcher:
   url: https://xkcd.com

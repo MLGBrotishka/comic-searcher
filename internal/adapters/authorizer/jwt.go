@@ -44,9 +44,10 @@ func (a *Authorizer) VerifyToken(ctx context.Context, token string) (int, error)
 	if err != nil {
 		return 0, err
 	}
-	userID, ok := claims["userId"].(int)
-	if !ok {
+	var userID int
+	_, err = fmt.Sscan(fmt.Sprintf("%v", claims["userId"]), &userID)
+	if err != nil {
 		return 0, entity.ErrInvalidToken
 	}
-	return int(userID), nil
+	return userID, nil
 }
