@@ -5,21 +5,21 @@ import (
 	"errors"
 	"net/http"
 
+	"my_app/internal/adapters/server/middleware"
 	"my_app/internal/entity"
-	"my_app/internal/usecase"
 	"my_app/pkg/logger"
 )
 
 type comicRoutes struct {
-	uc usecase.Comic
+	uc entity.ComicUseCase
 	l  logger.Interface
 }
 
-func newComicRoutes(router *http.ServeMux, uc usecase.Comic, l logger.Interface) {
+func newComicRoutes(router *http.ServeMux, uc entity.ComicUseCase, mid func(http.HandlerFunc) http.HandlerFunc, l logger.Interface) {
 	routes := &comicRoutes{uc, l}
-
-	router.HandleFunc("POST /update", routes.update)
-	router.HandleFunc("GET /pics", routes.getPictures)
+	roleChecker := middleware.NewRoleMiddleware()
+	router.HandleFunc("POST /update", mid(roleChecker.CheckRole(routes.update, true)))
+	router.HandleFunc("GET /pics", mid(roleChecker.CheckRole(routes.getPictures, false)))
 }
 
 // @Summary     Update comics

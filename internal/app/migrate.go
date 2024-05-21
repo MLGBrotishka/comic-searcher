@@ -27,6 +27,7 @@ func init() {
 	}
 	migrateSqlite3("SQLITE_COMIC_DSN", "./migrations/comics")
 	migrateSqlite3("SQLITE_KEYWORD_DSN", "./migrations/keywords")
+	migrateSqlite3("SQLITE_USER_DSN", "./migrations/users")
 }
 
 func migrateSqlite3(env string, path string) {

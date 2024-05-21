@@ -13,6 +13,12 @@ sqlite:
     dsn: db/comics.db?mode=rwc
   keyword:
     dsn: db/keywords.db?mode=rwc
+  user:
+    dsn: db/users.db?mode=rwc
+
+authorizer:
+  token_max_time: 10m
+  secret: "secret"
 
 fetcher:
   url: https://xkcd.com

@@ -7,12 +7,12 @@ import (
 )
 
 type AuthUseCase struct {
-	repo   UserRepo
-	auth   Authorizer
-	hasher Hasher
+	repo   entity.UserRepo
+	auth   entity.Authorizer
+	hasher entity.Hasher
 }
 
-func NewAuth(repo UserRepo, auth Authorizer, hasher Hasher) *AuthUseCase {
+func NewAuth(repo entity.UserRepo, auth entity.Authorizer, hasher entity.Hasher) *AuthUseCase {
 	return &AuthUseCase{
 		repo:   repo,
 		auth:   auth,

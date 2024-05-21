@@ -24,7 +24,9 @@ type (
 	}
 
 	HTTP struct {
-		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		Port             string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
+		RateLimit        int    `env-default:"100" yaml:"rate_limit" env:"RATE_LIMIT"`
+		ConcurrencyLimit int    `env-default:"12" yaml:"concurrency_limit" env:"CONCURRENCY_LIMIT"`
 	}
 
 	Log struct {

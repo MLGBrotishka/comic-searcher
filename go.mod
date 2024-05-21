@@ -9,6 +9,7 @@ require (
 	github.com/kljensen/snowball v0.9.0
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/rs/zerolog v1.32.0
+	golang.org/x/time v0.5.0
 )
 
 require (

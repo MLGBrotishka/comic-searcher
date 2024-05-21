@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"my_app/internal/usecase"
+	"my_app/internal/entity"
 	"my_app/pkg/logger"
 )
 
 type authRoutes struct {
-	uc usecase.Auth
+	uc entity.AuthUseCase
 	l  logger.Interface
 }
 
-func newAuthRoutes(router *http.ServeMux, uc usecase.Auth, l logger.Interface) {
+func newAuthRoutes(router *http.ServeMux, uc entity.AuthUseCase, mid func(http.HandlerFunc) http.HandlerFunc, l logger.Interface) {
 	authRoutes := &authRoutes{uc, l}
 
-	router.HandleFunc("POST /register", authRoutes.register)
-	router.HandleFunc("POST /login", authRoutes.login)
+	router.HandleFunc("POST /register", mid(authRoutes.register))
+	router.HandleFunc("POST /login", mid(authRoutes.login))
 }
 
 type AuthRequest struct {
@@ -37,7 +37,11 @@ func (a authRoutes) register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-
+	if req.Login == "" || req.Password == "" {
+		a.l.Info("Empty login or password")
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 	token, err := a.uc.SignUp(r.Context(), req.Login, req.Password)
 	if err != nil {
 		a.l.Error(err, "Failed to register")
@@ -58,7 +62,11 @@ func (a authRoutes) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-
+	if req.Login == "" || req.Password == "" {
+		a.l.Info("Empty login or password")
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 	token, err := a.uc.SignIn(r.Context(), req.Login, req.Password)
 	if err != nil {
 		a.l.Error(err, "Failed to login")

@@ -36,7 +36,7 @@ func Run(cfg *config.Config) {
 	}
 	defer keywordSqlite.Close()
 
-	userSqlite, err := sqlite.NewSqlite(cfg.Sqlite.Keyword.Dsn)
+	userSqlite, err := sqlite.NewSqlite(cfg.Sqlite.User.Dsn)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - sqlite.NewSqlite: %w", err))
 	}
@@ -59,7 +59,7 @@ func Run(cfg *config.Config) {
 	)
 
 	router := http.NewServeMux()
-	server.NewRouter(router, comicUseCase, authUseCase, l)
+	server.NewRouter(router, comicUseCase, authUseCase, cfg.HTTP.RateLimit, cfg.HTTP.ConcurrencyLimit, l)
 	// HTTP Server
 	httpServer := httpserver.New(router, httpserver.Port(cfg.HTTP.Port))
 

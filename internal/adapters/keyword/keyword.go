@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 	"my_app/internal/entity"
-	"my_app/internal/usecase"
 )
 
 type Keyword struct {
-	repo usecase.KeywordRepo
+	repo entity.KeywordRepo
 }
 
-func New(r usecase.KeywordRepo) *Keyword {
+func New(r entity.KeywordRepo) *Keyword {
 	return &Keyword{
 		repo: r,
 	}
 }
 
-func NewLoad(r usecase.KeywordRepo, comicrepo usecase.ComicRepo) (*Keyword, error) {
+func NewLoad(r entity.KeywordRepo, comicrepo entity.ComicRepo) (*Keyword, error) {
 	k := &Keyword{
 		repo: r,
 	}

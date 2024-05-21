@@ -7,13 +7,13 @@ import (
 )
 
 type ComicUseCase struct {
-	repo       ComicRepo
-	fetcher    ComicFetcher
-	normalizer Normalizer
-	keyword    Keyword
+	repo       entity.ComicRepo
+	fetcher    entity.ComicFetcher
+	normalizer entity.Normalizer
+	keyword    entity.Keyword
 }
 
-func NewComic(r ComicRepo, f ComicFetcher, n Normalizer, k Keyword) *ComicUseCase {
+func NewComic(r entity.ComicRepo, f entity.ComicFetcher, n entity.Normalizer, k entity.Keyword) *ComicUseCase {
 	return &ComicUseCase{
 		repo:       r,
 		fetcher:    f,
@@ -76,7 +76,7 @@ func (uc *ComicUseCase) GetPictures(ctx context.Context, query string) ([]string
 	return urlFound, nil
 }
 
-func normilizeRawComics(ctx context.Context, normalizer Normalizer, rawComics []entity.ComicRaw) ([]entity.Comic, error) {
+func normilizeRawComics(ctx context.Context, normalizer entity.Normalizer, rawComics []entity.ComicRaw) ([]entity.Comic, error) {
 	var comics []entity.Comic
 	for _, rawComic := range rawComics {
 		var err error
