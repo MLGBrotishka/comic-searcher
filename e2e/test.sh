@@ -7,6 +7,13 @@ LOGIN_PASSWORD="secure_debug"
 SEARCH_KEYWORDS="apple,doctor"
 EXPECTED_COMIC="apple a day"
 
+if ! command -v jq &> /dev/null
+then
+    echo "jq could not be found, installing..."
+    sudo apt-get update
+    sudo apt-get install -y jq
+fi
+
 # Запуск сервера
 echo "Starting server..."
 MAKE_PID=$!
