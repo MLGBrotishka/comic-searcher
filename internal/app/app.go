@@ -45,7 +45,7 @@ func Run(cfg *config.Config) {
 	// Use case
 	comicUseCase := usecase.NewComic(
 		repo_sqlite.NewComic(comicSqlite),
-		fetcher.NewFetcher(cfg.Fetcher.URL, cfg.Fetcher.Parallel, *l),
+		fetcher.NewFetcher(cfg.Fetcher.URL, cfg.Fetcher.Parallel, l),
 		normalizer.New(),
 		keyword.New(
 			repo_sqlite.NewKeyword(keywordSqlite),

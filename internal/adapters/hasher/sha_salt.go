@@ -8,12 +8,6 @@ import (
 	"fmt"
 )
 
-type IHasher interface {
-	GenerateSalt(ctx context.Context, size int) ([]byte, error)
-	HashPassword(ctx context.Context, password string, salt []byte) (string, error)
-	VerifyPassword(ctx context.Context, password string, salt []byte, hashedPassword string) (bool, error)
-}
-
 type Hasher struct {
 }
 

@@ -5,11 +5,10 @@ import (
 
 	"my_app/internal/adapters/limiter"
 	"my_app/internal/adapters/server/middleware"
-	"my_app/internal/entity"
 	"my_app/pkg/logger"
 )
 
-func NewRouter(handler *http.ServeMux, uc entity.ComicUseCase, auth entity.AuthUseCase, concurLimit int, rateLimit int, l logger.Interface) {
+func NewRouter(handler *http.ServeMux, uc ComicUseCase, auth AuthUseCase, concurLimit int, rateLimit int, l logger.Interface) {
 	rateLimiter := middleware.NewLimiterMiddleware(limiter.NewRateLimiter(rateLimit))
 	concurLimiter := middleware.NewLimiterMiddleware(limiter.NewConcurLimiter(concurLimit))
 	authMiddleware := middleware.NewAuthMiddleware(auth)

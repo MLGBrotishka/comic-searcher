@@ -7,16 +7,16 @@ import (
 )
 
 type Keyword struct {
-	repo entity.KeywordRepo
+	repo KeywordRepo
 }
 
-func New(r entity.KeywordRepo) *Keyword {
+func New(r KeywordRepo) *Keyword {
 	return &Keyword{
 		repo: r,
 	}
 }
 
-func NewLoad(r entity.KeywordRepo, comicrepo entity.ComicRepo) (*Keyword, error) {
+func NewLoad(r KeywordRepo, comicrepo ComicRepo) (*Keyword, error) {
 	k := &Keyword{
 		repo: r,
 	}

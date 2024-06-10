@@ -28,3 +28,34 @@ migrate-create:  ## create new migration
 migrate-up: ## migration up
 	migrate -path migrations -database '$(PG_URL)?sslmode=disable' up
 .PHONY: migrate-up
+
+sec: build ## check vulnerability
+	go install golang.org/x/vuln/cmd/govulncheck@latest && \
+	govulncheck ./...
+.PHONY: sec
+
+test:
+	go test ./... -cover -race && go tool cover -html=coverage.out
+.PHONY: test
+
+e2e:
+	./e2e/test.sh
+.PHONY: e2e
+
+# Linter
+GOLANGCI_LINT = $(LOCAL_BIN)/golangci-lint
+
+.install-linter:
+	$(shell [ -f bin ] || mkdir -p $(LOCAL_BIN))
+	### INSTALL GOLANGCI-LINT ###
+	[ -f $(LOCAL_BIN)/golangci-lint ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(LOCAL_BIN) v1.57.2
+.PHONY: .install-linter
+
+lint: .install-linter
+	### RUN GOLANGCI-LINT ###
+	$(GOLANGCI_LINT) run ./... --config=.golangci.yaml
+.PHONY: lint
+
+lint-fast: .install-linter
+	$(GOLANGCI_LINT) run ./... --fast --config=.golangci.yaml
+.PHONY: lint-fast

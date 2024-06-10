@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"my_app/internal/entity"
-	"my_app/pkg/logger"
 	"net/http"
 	"sync"
 )
@@ -13,13 +12,13 @@ import (
 type ComicFetcher struct {
 	sourceURL string
 	parallel  int
-	logger    logger.Logger
+	logger    Logger
 	muErr     sync.Mutex
 	muRes     sync.Mutex
 	wg        sync.WaitGroup
 }
 
-func NewFetcher(sourceURL string, parallel int, logger logger.Logger) *ComicFetcher {
+func NewFetcher(sourceURL string, parallel int, logger Logger) *ComicFetcher {
 	return &ComicFetcher{
 		sourceURL: sourceURL,
 		parallel:  parallel,

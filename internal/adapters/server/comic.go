@@ -11,11 +11,11 @@ import (
 )
 
 type comicRoutes struct {
-	uc entity.ComicUseCase
+	uc ComicUseCase
 	l  logger.Interface
 }
 
-func newComicRoutes(router *http.ServeMux, uc entity.ComicUseCase, mid func(http.HandlerFunc) http.HandlerFunc, l logger.Interface) {
+func newComicRoutes(router *http.ServeMux, uc ComicUseCase, mid func(http.HandlerFunc) http.HandlerFunc, l logger.Interface) {
 	routes := &comicRoutes{uc, l}
 	roleChecker := middleware.NewRoleMiddleware()
 	router.HandleFunc("POST /update", mid(roleChecker.CheckRole(routes.update, true)))

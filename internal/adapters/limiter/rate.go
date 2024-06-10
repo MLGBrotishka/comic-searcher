@@ -23,7 +23,7 @@ func NewRateLimiter(rateLimit int) *RateLimiter {
 
 func (rl *RateLimiter) Take(ctx context.Context, userID int) error {
 	limiter := rl.getLimiter(userID)
-	limiter.Wait(ctx)
+	_ = limiter.Wait(ctx)
 	return nil
 }
 

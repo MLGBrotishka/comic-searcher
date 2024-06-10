@@ -4,16 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"my_app/internal/entity"
 	"my_app/pkg/logger"
 )
 
 type authRoutes struct {
-	uc entity.AuthUseCase
+	uc AuthUseCase
 	l  logger.Interface
 }
 
-func newAuthRoutes(router *http.ServeMux, uc entity.AuthUseCase, mid func(http.HandlerFunc) http.HandlerFunc, l logger.Interface) {
+func newAuthRoutes(router *http.ServeMux, uc AuthUseCase, mid func(http.HandlerFunc) http.HandlerFunc, l logger.Interface) {
 	authRoutes := &authRoutes{uc, l}
 
 	router.HandleFunc("POST /register", mid(authRoutes.register))

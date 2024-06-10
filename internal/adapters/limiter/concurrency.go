@@ -19,6 +19,6 @@ func NewConcurLimiter(concurLimit int) *ConcurLimiter {
 }
 
 func (cl *ConcurLimiter) Take(ctx context.Context, _ int) error {
-	cl.limiter.Wait(ctx)
+	_ = cl.limiter.Wait(ctx)
 	return nil
 }
