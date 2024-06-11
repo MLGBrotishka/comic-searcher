@@ -9,9 +9,8 @@ EXPECTED_COMIC="apple a day"
 
 if ! command -v jq &> /dev/null
 then
-    echo "jq could not be found, installing..."
-    sudo apt-get update
-    sudo apt-get install -y jq
+    echo "jq could not be found, please install."
+    exit 1
 fi
 
 # Запуск сервера
