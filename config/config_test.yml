@@ -1,0 +1,25 @@
+app:
+  name: 'TestApp'
+  version: 'v1.0.0'
+
+http:
+  port: '8080'
+
+logger:
+  log_level: 'info'
+
+sqlite:
+  comic:
+    dsn: test_comic_dsn
+  keyword:
+    dsn: test_keyword_dsn
+  user:
+    dsn: test_user_dsn
+
+authorizer:
+  token_max_time: 1h
+  secret: secret
+
+fetcher:
+  url: https://example.com
+  parallel: 5
